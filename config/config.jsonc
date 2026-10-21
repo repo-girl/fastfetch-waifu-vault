@@ -1,0 +1,90 @@
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "type": "kitty-direct",
+        "source": "/home/Kayden/.config/fastfetch/images_nsfw/tsunade_091.png",
+        "height": 15,
+        "width": 20,
+        "preserveAspectRatio": true,
+        "padding": {
+            "top": 0,
+            "right": 2,
+            "left": 1
+        }
+    },
+    "display": {
+        "separator": "  ",
+        "color": {
+            "output": "white"
+        }
+    },
+    "modules": [
+        {
+            "key": "{##bf8b47}\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e{#}",
+            "type": "custom"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\uf004 {##d8c6ae}waifu   {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "Tsunade"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb81\udc48 {##d8c6ae}anime   {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "Naruto"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb83\ude17 {##d8c6ae}age     {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "55"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb81\udea5 {##d8c6ae}height  {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "163 cm"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb80\udf66 {##d8c6ae}cup     {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "I"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb85\udf86 {##d8c6ae}bust    {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "106 cm"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb80\udc27 {##d8c6ae}hips    {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "98 cm"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb80\uded1 {##d8c6ae}crush   {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "Dan Kat\u014d"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb80\udf37 {##d8c6ae}lover   {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "Dan Kat\u014d (deceased)"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\udb80\uddc5 {##d8c6ae}vault   {##bf8b47}\u2502{#}",
+            "type": "custom",
+            "format": "57 in Collection"
+        },
+        {
+            "key": "{##bf8b47}\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524{#}",
+            "type": "custom"
+        },
+        {
+            "key": "{##bf8b47}\u2502 {##2e67d8}\uefcc {##d8c6ae}colors  {##bf8b47}\u2502{#}",
+            "type": "colors",
+            "symbol": "circle"
+        },
+        {
+            "key": "{##bf8b47}\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f{#}",
+            "type": "custom"
+        }
+    ]
+}

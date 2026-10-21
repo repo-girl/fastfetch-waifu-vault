@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+import sys, os, glob, random, json, struct, colorsys, shutil
+from PIL import Image
+
+def find_system_fastfetch():
+    for p in os.environ.get("PATH", "").split(os.path.pathsep):
+        if os.path.expanduser("~/.local/bin") in p:
+            continue
+        candidate = os.path.join(p, "fastfetch")
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    return "/usr/bin/fastfetch"
+
+FASTFETCH_BIN = find_system_fastfetch()
+FASTFETCH_DIR = os.path.expanduser("~/.config/fastfetch")
+CONFIG_PATH = os.path.join(FASTFETCH_DIR, "config.jsonc")
+THEMES_PATH = os.path.join(FASTFETCH_DIR, "themes.json")
+CURRENT_LINK = os.path.join(FASTFETCH_DIR, "current.png")
+ENV_PATH = os.path.join(FASTFETCH_DIR, "theme_color.env")
+IMG_DIR_STD = os.path.join(FASTFETCH_DIR, "images")
+IMG_DIR_NSFW = os.path.join(FASTFETCH_DIR, "images_nsfw")
+MODE_FILE = f"/tmp/.fastfetch_nsfw_mode_{os.getuid()}"
+CHAR_DB_PATH = os.path.join(FASTFETCH_DIR, "characters.json")
+
+# Pass-through if user supplied explicit logo args
+for arg in sys.argv[1:]:
+    if any(arg.startswith(p) for p in ("--logo", "-l", "--kitty", "--file", "--raw")):
+        os.execvp(FASTFETCH_BIN, ["fastfetch"] + sys.argv[1:])
+
+def get_images(folder):
+    if not os.path.isdir(folder):
+        return []
+    valid = []
+    for f in glob.glob(os.path.join(folder, "*")):
+        ext = os.path.splitext(f)[1].lower()
+        if ext in (".png", ".webp", ".jpg", ".jpeg"):
+            if ext != ".png":
+                try:
+                    png_path = os.path.splitext(f)[0] + ".png"
+                    im = Image.open(f).convert("RGBA")
+                    im.save(png_path, format="PNG")
+                    os.remove(f)
+                    valid.append(png_path)
+                    continue
+                except Exception:
+                    pass
+            valid.append(f)
+    return valid
+
+# Global session check: if MODE_FILE exists in /tmp, ALL terminals pull from images_nsfw
+is_nsfw = os.path.exists(MODE_FILE)
+nsfw_imgs = get_images(IMG_DIR_NSFW) if is_nsfw else []
+
+if is_nsfw and nsfw_imgs:
+    imgs = nsfw_imgs
+else:
+    imgs = get_images(IMG_DIR_STD)
+
+def calculate_dimensions(w, h):
+    target_rows = 15
+    aspect = w / max(h, 1)
+    cols = round(target_rows * 2.05 * aspect)
+    if cols > 34:
+        cols = 34
+        rows = round(cols / (2.05 * aspect))
+    elif cols < 16:
+        cols = 16
+        rows = target_rows
+    else:
+        rows = target_rows
+    return cols, rows
+
+def extract_palette(img_path):
+    try:
+        im = Image.open(img_path).convert("RGBA")
+        bbox = im.getbbox()
+        if bbox:
+            im = im.crop(bbox)
+        im = im.resize((60, 60), Image.Resampling.BILINEAR)
+        candidates = []
+        for pixel in im.getdata():
+            r, g, b, a = pixel
+            if a < 100 or (r < 30 and g < 30 and b < 30) or (r > 235 and g > 235 and b > 235):
+                continue
+            h_val, s_val, v_val = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+            candidates.append(((s_val ** 1.3) * (v_val ** 0.8), r, g, b, h_val, s_val, v_val))
+        if candidates:
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            _, pr, pg, pb, phue, _, pval = candidates[0]
+            if pval < 0.70:
+                f = 0.75 / max(pval, 0.1)
+                pr, pg, pb = min(255, int(pr * f)), min(255, int(pg * f)), min(255, int(pb * f))
+            border = f"#{pr:02x}{pg:02x}{pb:02x}"
+            icon = None
+            for _, ir, ig, ib, ihue, _, ival in candidates[1:]:
+                if abs(ihue - phue) > 0.08:
+                    if ival < 0.75:
+                        f = 0.85 / max(ival, 0.1)
+                        ir, ig, ib = min(255, int(ir * f)), min(255, int(ig * f)), min(255, int(ib * f))
+                    icon = f"#{ir:02x}{ig:02x}{ib:02x}"
+                    break
+            if not icon:
+                icon = f"#{min(255, int(pr*0.8+50)):02x}{min(255, int(pg*0.8+50)):02x}{min(255, int(pb*0.8+50)):02x}"
+            label = f"#{min(255, int(pr*0.35+150)):02x}{min(255, int(pg*0.35+150)):02x}{min(255, int(pb*0.35+150)):02x}"
+            return {"border": border, "icon": icon, "label": label, "quote": border}
+    except Exception:
+        pass
+    return {"border": "#bb9af7", "icon": "#7aa2f7", "label": "#c0caf5", "quote": "#bb9af7"}
+
+if imgs:
+    img_path = random.choice(imgs)
+    img_name = os.path.basename(img_path)
+    
+    themes = {}
+    if os.path.isfile(THEMES_PATH):
+        try:
+            with open(THEMES_PATH, "r") as f:
+                themes = json.load(f)
+        except Exception:
+            themes = {}
+    
+    theme = themes.get(img_name)
+    if not theme:
+        try:
+            with open(img_path, "rb") as f:
+                f.seek(16)
+                w, h = struct.unpack(">II", f.read(8))
+        except Exception:
+            w, h = 500, 500
+        cols, rows = calculate_dimensions(w, h)
+        pal = extract_palette(img_path)
+        pal["cols"] = cols
+        pal["rows"] = rows
+        theme = pal
+        try:
+            themes[img_name] = theme
+            with open(THEMES_PATH, "w") as f:
+                json.dump(themes, f, indent=2)
+        except Exception:
+            pass
+    
+    border = theme["border"].lstrip("#")
+    icon = theme["icon"].lstrip("#")
+    label = theme["label"].lstrip("#")
+    cols = theme.get("cols", 24)
+    rows = theme.get("rows", 15)
+    
+    cb = f"{{##{border}}}"
+    ci = f"{{##{icon}}}"
+    cl = f"{{##{label}}}"
+    cr = "{#}"
+    
+    if is_nsfw and img_path.startswith(IMG_DIR_NSFW):
+        char_info = {}
+        if os.path.isfile(CHAR_DB_PATH):
+            try:
+                with open(CHAR_DB_PATH, "r", encoding="utf-8") as f:
+                    db = json.load(f)
+                    prefix = img_name.rsplit("_", 1)[0]
+                    char_info = db.get(img_name) or db.get("__prefixes__", {}).get(prefix, {})
+            except Exception:
+                pass
+        
+        char_name = char_info.get("name") or img_name.rsplit("_", 1)[0].replace("-", " ").title()
+        anime_title = char_info.get("anime") or "Anime Vault"
+        age_val = char_info.get("age", "Unknown")
+        height_val = char_info.get("height", "Unknown")
+        cup_val = char_info.get("cup", "Not published")
+        bust_val = char_info.get("bust", "Not published")
+        hips_val = char_info.get("hips", "Not published")
+        crush_val = char_info.get("crush", "—")
+        lover_val = char_info.get("lover", "None")
+        vault_val = char_info.get("vault", f"{len(nsfw_imgs)} in Collection")
+        
+        modules = [
+            {"key": f"{cb}╭───────────╮{cr}", "type": "custom"},
+            {"key": f"{cb}│ {ci} {cl}waifu   {cb}│{cr}", "type": "custom", "format": char_name},
+            {"key": f"{cb}│ {ci}󰑈 {cl}anime   {cb}│{cr}", "type": "custom", "format": anime_title},
+            {"key": f"{cb}│ {ci}󰸗 {cl}age     {cb}│{cr}", "type": "custom", "format": age_val},
+            {"key": f"{cb}│ {ci}󰚥 {cl}height  {cb}│{cr}", "type": "custom", "format": height_val},
+            {"key": f"{cb}│ {ci}󰍦 {cl}cup     {cb}│{cr}", "type": "custom", "format": cup_val},
+            {"key": f"{cb}│ {ci}󱞆 {cl}bust    {cb}│{cr}", "type": "custom", "format": bust_val},
+            {"key": f"{cb}│ {ci}󰀧 {cl}hips    {cb}│{cr}", "type": "custom", "format": hips_val},
+            {"key": f"{cb}│ {ci}󰋑 {cl}crush   {cb}│{cr}", "type": "custom", "format": crush_val},
+            {"key": f"{cb}│ {ci}󰌷 {cl}lover   {cb}│{cr}", "type": "custom", "format": lover_val},
+            {"key": f"{cb}│ {ci}󰇅 {cl}vault   {cb}│{cr}", "type": "custom", "format": vault_val},
+            {"key": f"{cb}├───────────┤{cr}", "type": "custom"},
+            {"key": f"{cb}│ {ci} {cl}colors  {cb}│{cr}", "type": "colors", "symbol": "circle"},
+            {"key": f"{cb}╰───────────╯{cr}", "type": "custom"}
+        ]
+    else:
+        modules = [
+            {"key": f"{cb}╭───────────╮{cr}", "type": "custom"},
+            {"key": f"{cb}│ {ci} {cl}user    {cb}│{cr}", "type": "title", "format": "{user-name}"},
+            {"key": f"{cb}│ {ci}󰇅 {cl}hname   {cb}│{cr}", "type": "title", "format": "{host-name}"},
+            {"key": f"{cb}│ {ci}󰅐 {cl}uptime  {cb}│{cr}", "type": "uptime"},
+            {"key": f"{cb}│ {ci} {cl}distro  {cb}│{cr}", "type": "os"},
+            {"key": f"{cb}│ {ci} {cl}kernel  {cb}│{cr}", "type": "kernel"},
+            {"key": f"{cb}│ {ci} {cl}wm      {cb}│{cr}", "type": "wm"},
+            {"key": f"{cb}│ {ci} {cl}term    {cb}│{cr}", "type": "terminal"},
+            {"key": f"{cb}│ {ci} {cl}shell   {cb}│{cr}", "type": "shell"},
+            {"key": f"{cb}│ {ci}󰍛 {cl}cpu     {cb}│{cr}", "type": "cpu", "showPeCoreCount": True},
+            {"key": f"{cb}│ {ci}󰉉 {cl}disk    {cb}│{cr}", "type": "disk", "folders": "/"},
+            {"key": f"{cb}│ {ci} {cl}memory  {cb}│{cr}", "type": "memory"},
+            {"key": f"{cb}├───────────┤{cr}", "type": "custom"},
+            {"key": f"{cb}│ {ci} {cl}colors  {cb}│{cr}", "type": "colors", "symbol": "circle"},
+            {"key": f"{cb}╰───────────╯{cr}", "type": "custom"}
+        ]
+    
+    cfg = {
+        "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+        "logo": {
+            "type": "kitty-direct",
+            "source": img_path,
+            "height": rows,
+            "width": cols,
+            "preserveAspectRatio": True,
+            "padding": {"top": 0, "right": 2, "left": 1}
+        },
+        "display": {
+            "separator": "  ",
+            "color": {
+                "output": "white"
+            }
+        },
+        "modules": modules
+    }
+    
+    try:
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(cfg, f, indent=4)
+    except Exception:
+        pass
+    
+    try:
+        br = int(border[0:2], 16)
+        bg = int(border[2:4], 16)
+        bb = int(border[4:6], 16)
+        with open(ENV_PATH, "w") as f:
+            f.write(f"THEME_HEX=\"#{border}\"\nTHEME_R={br}\nTHEME_G={bg}\nTHEME_B={bb}\n")
+    except Exception:
+        pass
+    
+    try:
+        if os.path.islink(CURRENT_LINK) or os.path.exists(CURRENT_LINK):
+            os.unlink(CURRENT_LINK)
+        os.symlink(img_path, CURRENT_LINK)
+    except Exception:
+        pass
+
+os.execvp(FASTFETCH_BIN, ["fastfetch"] + sys.argv[1:])

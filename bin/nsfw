@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+UID_VAL=$(id -u)
+MODE_FILE="/tmp/.fastfetch_nsfw_mode_${UID_VAL}"
+NSFW_DIR="$HOME/.config/fastfetch/images_nsfw"
+
+if [ -f "$MODE_FILE" ]; then
+    rm -f "$MODE_FILE"
+    echo -e "\033[1;32m[+] Mode deactivated. All terminals will now use standard images.\033[0m"
+    sleep 0.3
+    clear
+    fastfetch
+else
+    mkdir -p "$NSFW_DIR"
+    touch "$MODE_FILE"
+    COUNT=$(find "$NSFW_DIR" -maxdepth 1 -type f \( -iname "*.png" -o -iname "*.webp" -o -iname "*.jpg" -o -iname "*.jpeg" \) 2>/dev/null | wc -l)
+    if [ "$COUNT" -eq 0 ]; then
+        echo -e "\033[1;35m[✦] NSFW Mode Enabled across all terminal windows.\033[0m"
+        echo -e "\033[0;33m    (Folder is currently empty. Drop your PNGs into: $NSFW_DIR)\033[0m"
+        echo -e "\033[0;37m    (Type 'nsfw' again anytime to disable)\033[0m"
+    else
+        echo -e "\033[1;35m[✦] NSFW Mode Enabled (${COUNT} images). All opened terminals will show these.\033[0m"
+    fi
+    sleep 0.3
+    clear
+    fastfetch
+fi
