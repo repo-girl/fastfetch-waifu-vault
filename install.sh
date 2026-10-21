@@ -97,16 +97,13 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     echo -e "    ${CYAN}export PATH=\"\$HOME/.local/bin:\$PATH\"${NC}\n"
 fi
 
-# 7. Enable NSFW mode
-touch "/tmp/.fastfetch_nsfw_mode_$(id -u)"
-
 echo -e "${GREEN}╭──────────────────────────────────────────────────────────╮${NC}"
 echo -e "${GREEN}│  🎉 Installation Complete! Fastfetch Waifu Vault Ready!  │${NC}"
 echo -e "${GREEN}╰──────────────────────────────────────────────────────────╯${NC}\n"
+echo -e "${YELLOW}[!] ACTIVATION REQUIRED:${NC}"
+echo -e "    Run ${CYAN}nsfw${NC} in your terminal to enable Waifu Mode!"
+echo -e ""
 echo -e "Commands available:"
+echo -e "  • ${CYAN}nsfw${NC}        : Activate / Toggle Waifu Mode ON & OFF"
 echo -e "  • ${CYAN}fastfetch${NC}   : Run fastfetch with dynamic theme & waifu card"
-echo -e "  • ${CYAN}nsfw${NC}        : Toggle NSFW mode ON / OFF across all terminal sessions"
 echo -e "  • Cutouts:   ${CYAN}~/.config/fastfetch/images_nsfw${NC}\n"
-
-# Run fastfetch to demonstrate
-"$BIN_DIR/fastfetch" || true

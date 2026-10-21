@@ -74,10 +74,26 @@ chmod +x install.sh
 
 ---
 
-## 🎮 Usage
+## 🎮 Usage & Activation
 
-- **`fastfetch`**: Runs fastfetch with a random waifu and matching color theme.
-- **`nsfw`**: Toggle between Waifu Details mode and System Info mode.
+> [!IMPORTANT]
+> **Activation Required:** Waifu cutouts and stat cards are activated only after toggling **`nsfw`** mode on!
+
+1. **Activate Waifu Mode**:
+   Run the toggle command once in your terminal:
+   ```bash
+   nsfw
+   ```
+   *(This enables Waifu Card Mode across all terminal windows).*
+
+2. **Display Fastfetch**:
+   ```bash
+   fastfetch
+   ```
+   *(Pulls a random waifu, calculates real-time color accents, and prints her stat card).*
+
+3. **Toggle Back / Deactivate**:
+   Type `nsfw` again anytime to switch back to clean **Standard System Info Mode** (ideal for screen sharing, school, or work).
 
 ---
 
