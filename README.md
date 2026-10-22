@@ -16,6 +16,8 @@ A dynamic, high-performance **Fastfetch** theme and configuration bundle featuri
 
 ## 📸 Preview
 
+![Fastfetch Waifu Vault Preview](assets/fastfetch-preview-crop.png)
+
 ### Waifu Stat Card (NSFW Mode)
 ```text
 ╭───────────╮  
