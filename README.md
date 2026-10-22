@@ -39,7 +39,7 @@ A dynamic, high-performance **Fastfetch** theme and configuration bundle featuri
 ### Standard System Info (Normal Mode)
 ```text
 ╭───────────╮  
-│  user    │  Kayden
+│  user    │  Repo-girl
 │ 󰇅 hname   │  fedora
 │ 󰅐 uptime  │  45 mins
 │  distro  │  Fedora Linux 44
@@ -48,8 +48,8 @@ A dynamic, high-performance **Fastfetch** theme and configuration bundle featuri
 │  term    │  kitty
 │  shell   │  zsh
 │ 󰍛 cpu     │  AMD Ryzen 5 5600H
-│ 󰉉 disk    │  52 GiB / 138 GiB
-│  memory  │  4.08 GiB / 7.09 GiB
+│ 󰉉 disk    │  252 GiB / 1862 GiB
+│  memory  │  4.08 GiB / 31.09 GiB
 ├───────────┤  
 │  colors  │  ● ● ● ● ● ● ● ●
 ╰───────────╯  
